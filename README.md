@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Image Region Extractor
 
 Ứng dụng web cho phép tạo template và trích xuất các vùng ảnh từ ảnh gốc dựa trên template đã định nghĩa.
@@ -144,3 +145,7 @@ Dự án này được phân phối theo giấy phép MIT. Xem file [LICENSE](LI
 ---
 
 *Dự án được phát triển như một công cụ mã nguồn mở.*
+=======
+# image-processing-tool
+A webapp to extract image form image
+>>>>>>> a653dcc2cd7aab39834e90e35aacabd88d3caa9e
