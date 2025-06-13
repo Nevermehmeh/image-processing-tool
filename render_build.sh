@@ -8,6 +8,17 @@ pip install --upgrade pip
 # Cài đặt các gói Python
 pip install -r requirements.txt
 
-# Áp dụng migrations
+# Tạo thư mục migrations nếu chưa tồn tại
+mkdir -p migrations/versions
+
+# Khởi tạo cơ sở dữ liệu nếu cần
 export FLASK_APP=wsgi:app
+
+# Kiểm tra xem đã có migrations chưa
+if [ ! -f "migrations/README" ]; then
+    flask db init
+fi
+
+# Tạo và áp dụng migrations
+flask db migrate -m "Initial migration"
 flask db upgrade
