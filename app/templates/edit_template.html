@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="h5 mb-0">
+                        <i class="fas fa-edit me-2"></i>Chỉnh sửa Template
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Tên Template</label>
+                            <input type="text" class="form-control" id="name" name="name" 
+                                   value="{{ template.name }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Ảnh Template</label>
+                            {% if template.template_image_path %}
+                            <div class="mb-2">
+                                <img src="{{ url_for('main.uploaded_file', filename=template.template_image_path) }}" 
+                                     class="img-fluid mb-2" style="max-height: 200px;">
+                                <p class="text-muted">Để trống nếu không muốn thay đổi ảnh</p>
+                            </div>
+                            {% endif %}
+                            <input type="file" class="form-control" id="template_image" name="template_image" 
+                                   accept="image/*">
+                        </div>
+                        
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h3 class="h6 mb-0">Vùng 1</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="region1_x" class="form-label">X</label>
+                                        <input type="number" class="form-control" id="region1_x" name="region1_x"
+                                               value="{{ template.region1_x }}" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="region1_y" class="form-label">Y</label>
+                                        <input type="number" class="form-control" id="region1_y" name="region1_y"
+                                               value="{{ template.region1_y }}" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="region1_width" class="form-label">Rộng</label>
+                                        <input type="number" class="form-control" id="region1_width" name="region1_width"
+                                               value="{{ template.region1_width }}" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="region1_height" class="form-label">Cao</label>
+                                        <input type="number" class="form-control" id="region1_height" name="region1_height"
+                                               value="{{ template.region1_height }}" required>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h3 class="h6 mb-0">Vùng 2</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="region2_x" class="form-label">X</label>
+                                        <input type="number" class="form-control" id="region2_x" name="region2_x"
+                                               value="{{ template.region2_x }}" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="region2_y" class="form-label">Y</label>
+                                        <input type="number" class="form-control" id="region2_y" name="region2_y"
+                                               value="{{ template.region2_y }}" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="region2_width" class="form-label">Rộng</label>
+                                        <input type="number" class="form-control" id="region2_width" name="region2_width"
+                                               value="{{ template.region2_width }}" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="region2_height" class="form-label">Cao</label>
+                                        <input type="number" class="form-control" id="region2_height" name="region2_height"
+                                               value="{{ template.region2_height }}" required>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('main.list_templates') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i> Quay lại
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i> Lưu thay đổi
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Khởi tạo tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Xử lý hiển thị ảnh preview khi chọn file
+    document.getElementById('template_image').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const preview = document.createElement('img');
+                preview.src = event.target.result;
+                preview.className = 'img-fluid mb-2';
+                preview.style.maxHeight = '200px';
+                
+                const previewContainer = document.querySelector('.preview-container');
+                if (!previewContainer) {
+                    const container = document.createElement('div');
+                    container.className = 'preview-container mb-3';
+                    container.appendChild(preview);
+                    e.target.parentNode.insertBefore(container, e.target);
+                } else {
+                    previewContainer.innerHTML = '';
+                    previewContainer.appendChild(preview);
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+});
+</script>
+{% endblock %}

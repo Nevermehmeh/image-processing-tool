@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container template-grid">
+    <div class="template-header">
+        <h1><i class="fas fa-th-large me-2 text-primary"></i> Template Library</h1>
+        <a href="{{ url_for('main.create_template') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i> New Template
+        </a>
+    </div>
+
+    <!-- Debug Info -->
+    <div class="alert alert-info mb-4">
+        <h5>Debug Information</h5>
+        <p>Number of templates: {{ templates|length }}</p>
+        {% if templates %}
+        <pre>Templates loaded successfully</pre>
+        {% endif %}
+    </div>
+
+    {% if templates %}
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
+        {% for template in templates %}
+        <div class="col">
+            <div class="card h-100">
+                <div class="position-relative">
+                    {% if template.thumbnail_path %}
+                    <img src="{{ url_for('main.uploaded_file', filename=template.thumbnail_path) }}" 
+                         class="card-img-top" 
+                         alt="{{ template.name }}">
+                    {% else %}
+                    <div class="card-img-top d-flex flex-column align-items-center justify-content-center bg-light" style="height: 180px;">
+                        <i class="fas fa-image fa-3x text-muted mb-2"></i>
+                        <span class="text-muted">No preview</span>
+                    </div>
+                    {% endif %}
+                    <div class="position-absolute top-0 end-0 m-2">
+                        <span class="badge bg-primary">ID: {{ template.id }}</span>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="card-title mb-0">{{ template.name }}</h5>
+                    </div>
+                    <div class="d-flex align-items-center text-muted mb-3">
+                        <i class="far fa-calendar-alt me-2"></i>
+                        <small>Created {{ template.created_at|datetimeformat('%b %d, %Y') if template.created_at else 'N/A' }}</small>
+                    </div>
+                    <div class="d-flex align-items-center text-muted mb-2">
+                        <i class="far fa-image me-2"></i>
+                        <small>2 regions defined</small>
+                    </div>
+                </div>
+                
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="{{ url_for('main.extract_regions', template_id=template.id) }}" 
+                           class="btn btn-sm btn-primary"
+                           data-bs-toggle="tooltip"
+                           title="Use this template">
+                            <i class="fas fa-crop-alt me-1"></i> Use
+                        </a>
+                        <div class="btn-group">
+                            <a href="{{ url_for('main.edit_template', template_id=template.id) }}" 
+                               class="btn btn-sm btn-outline-secondary me-1"
+                               data-bs-toggle="tooltip"
+                               title="Edit template"
+                               onclick="event.stopPropagation()">
+                                <i class="fas fa-pencil-alt"></i>
+                            </a>
+                            <button type="button" 
+                                    class="btn btn-sm btn-outline-danger delete-template"
+                                    data-bs-toggle="tooltip"
+                                    data-template-id="{{ template.id }}"
+                                    data-template-name="{{ template.name }}"
+                                    title="Delete template">
+                                <i class="far fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-inbox"></i>
+        <h3>No Templates Yet</h3>
+        <p>You haven't created any templates yet. Get started by creating your first template to extract regions from images.</p>
+        <a href="{{ url_for('main.create_template') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i> Create Your First Template
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // Xử lý sự kiện xóa template
+    document.querySelectorAll('.delete-template').forEach(button => {
+        button.addEventListener('click', function(e) {
+            const templateId = this.getAttribute('data-template-id');
+            const templateName = this.getAttribute('data-template-name');
+            
+            if (confirm(`Bạn có chắc chắn muốn xóa template "${templateName}" không?`)) {
+                fetch(`/api/templates/${templateId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(err => { throw new Error(err.error || 'Lỗi khi xóa template'); });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Hiển thị thông báo thành công
+                    const alert = document.createElement('div');
+                    alert.className = 'alert alert-success alert-dismissible fade show';
+                    alert.role = 'alert';
+                    alert.innerHTML = `
+                        <i class="fas fa-check-circle me-2"></i>
+                        ${data.message || 'Xóa template thành công'}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    `;
+                    document.querySelector('main').prepend(alert);
+                    
+                    // Ẩn thông báo sau 3 giây
+                    setTimeout(() => {
+                        const bsAlert = new bootstrap.Alert(alert);
+                        bsAlert.close();
+                    }, 3000);
+                    
+                    // Xóa template khỏi giao diện
+                    this.closest('.col').remove();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    // Hiển thị thông báo lỗi
+                    const alert = document.createElement('div');
+                    alert.className = 'alert alert-danger alert-dismissible fade show';
+                    alert.role = 'alert';
+                    alert.innerHTML = `
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        ${error.message || 'Đã xảy ra lỗi khi xóa template'}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    `;
+                    document.querySelector('main').prepend(alert);
+                    
+                    // Ẩn thông báo sau 5 giây
+                    setTimeout(() => {
+                        const bsAlert = new bootstrap.Alert(alert);
+                        bsAlert.close();
+                    }, 5000);
+                });
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

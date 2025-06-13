@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    #image-container {
+        position: relative;
+        margin: 20px 0;
+        border: 2px dashed #ccc;
+        min-height: 400px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f8f9fa;
+    }
+    
+    #image-preview {
+        max-width: 100%;
+        max-height: 600px;
+        display: none;
+    }
+    
+    .region {
+        position: absolute;
+        border: 2px solid;
+        cursor: move;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: white;
+        text-shadow: 0 0 5px rgba(0,0,0,0.8);
+    }
+    
+    .region-handle {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        background: white;
+        border: 2px solid #000;
+        border-radius: 50%;
+    }
+    
+    .region-handle.nw { top: -5px; left: -5px; cursor: nw-resize; }
+    .region-handle.ne { top: -5px; right: -5px; cursor: ne-resize; }
+    .region-handle.sw { bottom: -5px; left: -5px; cursor: sw-resize; }
+    .region-handle.se { bottom: -5px; right: -5px; cursor: se-resize; }
+    
+    .dimension-input {
+        max-width: 100px;
+        display: inline-block;
+        margin: 0 5px;
+    }
+    
+    .region-controls {
+        margin-bottom: 15px;
+        padding: 10px;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h2 class="h5 mb-0">Create New Template</h2>
+            </div>
+            <div class="card-body">
+                <form id="template-form">
+                    <div class="mb-3">
+                        <label for="template-name" class="form-label">Template Name</label>
+                        <input type="text" class="form-control" id="template-name" required>
+                        <div class="form-text">Enter a unique name for this template</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Upload Base Image</label>
+                        <div class="input-group">
+                            <input type="file" class="form-control" id="image-upload" accept=".png" required>
+                            <button class="btn btn-outline-secondary" type="button" id="load-image">Load Image</button>
+                        </div>
+                        <div class="form-text">Upload a PNG image (max 6000x6000px)</div>
+                    </div>
+                    
+                    <div id="image-container">
+                        <div id="drop-zone" class="text-center p-5">
+                            <i class="fas fa-upload fa-3x mb-3 text-muted"></i>
+                            <p class="mb-0">Drag & drop your image here or click to select</p>
+                        </div>
+                        <img id="image-preview" class="img-fluid">
+                    </div>
+                    
+                    <div id="regions-container" style="display: none;">
+                        <h4 class="mt-4 mb-3">Region Settings</h4>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="region-controls bg-light">
+                                    <h5>Region 1</h5>
+                                    <div class="mb-2">
+                                        <label class="form-label d-inline">Size:</label>
+                                        <input type="number" class="form-control form-control-sm d-inline-block dimension-input" id="region1-width" min="1" value="200" required>
+                                        <span class="mx-1">x</span>
+                                        <input type="number" class="form-control form-control-sm d-inline-block dimension-input" id="region1-height" min="1" value="200" required>
+                                        <span class="ms-1">px</span>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="region1-lock" checked>
+                                        <label class="form-check-label" for="region1-lock">Lock aspect ratio</label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="region-controls bg-light">
+                                    <h5>Region 2</h5>
+                                    <div class="mb-2">
+                                        <label class="form-label d-inline">Size:</label>
+                                        <input type="number" class="form-control form-control-sm d-inline-block dimension-input" id="region2-width" min="1" value="200" required>
+                                        <span class="mx-1">x</span>
+                                        <input type="number" class="form-control form-control-sm d-inline-block dimension-input" id="region2-height" min="1" value="200" required>
+                                        <span class="ms-1">px</span>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="region2-lock" checked>
+                                        <label class="form-check-label" for="region2-lock">Lock aspect ratio</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Drag the regions to position them on the image. Use the handles to resize.
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-4">
+                            <button type="button" class="btn btn-outline-secondary" id="reset-regions">
+                                <i class="fas fa-redo me-2"></i>Reset Regions
+                            </button>
+                            <button type="submit" class="btn btn-primary" id="save-template">
+                                <i class="fas fa-save me-2"></i>Save Template
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center p-4">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <h5 id="loading-message">Processing...</h5>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/create_template.js') }}"></script>
+{% endblock %}

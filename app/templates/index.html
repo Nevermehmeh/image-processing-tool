@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 text-center">
+        <h1 class="display-4 mb-4">Welcome to Image Region Extractor</h1>
+        <p class="lead mb-5">A powerful tool to define and extract specific regions from your images using templates.</p>
+        
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="display-1 text-primary mb-3">
+                            <i class="fas fa-object-group"></i>
+                        </div>
+                        <h3>Create Template</h3>
+                        <p>Define regions on your image to create a reusable template for extraction.</p>
+                        <a href="{{ url_for('main.create_template') }}" class="btn btn-primary">Get Started</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="display-1 text-success mb-3">
+                            <i class="fas fa-crop-alt"></i>
+                        </div>
+                        <h3>Extract Regions</h3>
+                        <p>Use existing templates to extract specific regions from your images.</p>
+                        <a href="{{ url_for('main.extract_regions') }}" class="btn btn-success">Extract Now</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-5">
+            <h2>How It Works</h2>
+            <div class="row mt-4">
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <div class="step-number bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 50px; height: 50px; font-size: 1.5rem; margin: 0 auto;">1</div>
+                            <h5>Upload Image</h5>
+                            <p class="text-muted">Upload your base image to define regions.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <div class="step-number bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 50px; height: 50px; font-size: 1.5rem; margin: 0 auto;">2</div>
+                            <h5>Define Regions</h5>
+                            <p class="text-muted">Draw and position rectangles to mark regions of interest.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <div class="step-number bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 50px; height: 50px; font-size: 1.5rem; margin: 0 auto;">3</div>
+                            <h5>Extract & Download</h5>
+                            <p class="text-muted">Save your template and extract regions from new images.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
