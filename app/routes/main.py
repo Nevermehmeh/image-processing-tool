@@ -16,19 +16,32 @@ def allowed_file(filename, allowed_extensions):
            filename.rsplit('.', 1)[1].lower() in allowed_extensions
 
 def create_thumbnail(image_path, output_path, size=(200, 200)):
-    """Tạo thumbnail từ ảnh gốc"""
+    """Tạo thumbnail từ ảnh gốc, hỗ trợ ảnh lớn"""
     try:
-        # Mở ảnh gốc
-        img = Image.open(image_path)
+        # Tạo thư mục đích nếu chưa tồn tại
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
         
-        # Thay đổi kích thước ảnh
-        img.thumbnail(size, Image.Resampling.LANCZOS)
+        # Mở ảnh gốc bằng PIL với tối ưu cho ảnh lớn
+        from PIL import Image, ImageFile
+        ImageFile.LOAD_TRUNCATED_IMAGES = True
         
-        # Lưu ảnh thumbnail
-        img.save(output_path)
+        with Image.open(image_path) as img:
+            # Chuyển sang chế độ RGB nếu ảnh ở chế độ RGBA
+            if img.mode in ('RGBA', 'LA'):
+                background = Image.new('RGB', img.size, (255, 255, 255))
+                background.paste(img, mask=img.split()[-1])
+                img = background
+            
+            # Thay đổi kích thước ảnh với bộ lọc chất lượng cao
+            img.thumbnail(size, Image.Resampling.LANCZOS)
+            
+            # Lưu ảnh thumbnail với chất lượng tốt
+            img.save(output_path, 'JPEG', quality=85, optimize=True, progressive=True)
+            
         return True
     except Exception as e:
         current_app.logger.error(f'Lỗi khi tạo thumbnail: {str(e)}')
+        current_app.logger.error(traceback.format_exc())
         return False
 
 bp = Blueprint('main', __name__)
@@ -364,8 +377,25 @@ def extract_image_regions():
         current_app.logger.info(f'Đã lưu file tạm thời: {temp_path}')
         
         try:
-            # Đọc ảnh bằng OpenCV
-            img = cv2.imread(temp_path)
+            # Đọc ảnh bằng PIL để xử lý ảnh lớn hiệu quả hơn
+            from PIL import Image, ImageFile
+            # Cho phép tải ảnh lớn
+            Image.MAX_IMAGE_PIXELS = 1000000000  # Tăng giới hạn kích thước ảnh
+            ImageFile.LOAD_TRUNCATED_IMAGES = True  # Cho phép đọc ảnh bị lỗi nhỏ
+            
+            # Mở ảnh bằng PIL
+            pil_img = Image.open(temp_path)
+            
+            # Kiểm tra kích thước ảnh
+            width, height = pil_img.size
+            max_size = 9000
+            if width > max_size or height > max_size:
+                raise ValueError(f'Kích thước ảnh vượt quá giới hạn cho phép ({max_size}x{max_size}px)')
+                
+            # Chuyển sang OpenCV để xử lý
+            img = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
+            del pil_img  # Giải phóng bộ nhớ
+            
             if img is None:
                 raise ValueError('Không thể đọc file ảnh')
                 
