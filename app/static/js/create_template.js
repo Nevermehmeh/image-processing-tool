@@ -131,8 +131,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 imageAspectRatio = img.naturalWidth / img.naturalHeight;
                 
                 // Check image size
-                if (img.naturalWidth > 6000 || img.naturalHeight > 6000) {
-                    reject(new Error('Image dimensions exceed the maximum allowed size of 6000x6000px'));
+                if (img.naturalWidth > 9000 || img.naturalHeight > 9000) {
+                    reject(new Error('Image dimensions exceed the maximum allowed size of 9000x9000px'));
                     return;
                 }
                 
