@@ -2,22 +2,39 @@ services:
   - type: web
     name: image-processor
     env: python
+    region: singapore  # Chọn region gần nhất với người dùng của bạn
+    plan: standard  # Nâng cấp lên plan standard để có nhiều tài nguyên hơn
+    autoDeploy: true  # Tự động deploy khi có thay đổi
     buildCommand: |
+      echo "-----> Installing dependencies"
+      pip install --upgrade pip
       pip install -r requirements.txt
-    startCommand: gunicorn wsgi:app
+      echo "-----> Running migrations"
+      flask db upgrade
+    startCommand: gunicorn --worker-tmp-dir /dev/shm --workers=2 --threads=4 --worker-class=gthread --timeout 300 --bind=:$PORT wsgi:app
     envVars:
       - key: PYTHON_VERSION
         value: 3.9.13
+      - key: PYTHONUNBUFFERED
+        value: "1"
       - key: FLASK_APP
         value: wsgi:app
       - key: FLASK_ENV
         value: production
       - key: UPLOAD_FOLDER
         value: /opt/render/project/src/static/uploads
-    # Thêm các biến môi trường khác vào đây sau khi tạo service trên Render
-    # - key: SECRET_KEY
-    #   generateValue: true
-    # - key: DATABASE_URL
+      - key: MAX_CONTENT_LENGTH
+        value: "52428800"  # 50MB
+      - key: MAX_IMAGE_SIZE
+        value: "9000"  # Kích thước ảnh tối đa
+      - key: GUNICORN_WORKERS
+        value: "2"
+      - key: GUNICORN_THREADS
+        value: "4"
+      # Các biến bảo mật nên đặt trong môi trường Render
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
     #   fromDatabase:
     #     name: image-processor-db
     #     property: connectionString
