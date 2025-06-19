@@ -2,6 +2,8 @@
 __pycache__/
 *.py[cod]
 *$py.class
+*.pyo
+*.pyd
 *.so
 .Python
 build/
@@ -19,20 +21,28 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.python-version
 
 # Virtual Environment
 venv/
 env/
 ENV/
+.venv/
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 
 # Database
 *.db
+*.sqlite
 *.sqlite3
 app.db
 
@@ -42,12 +52,76 @@ logs/
 
 # Environment variables
 .env
+.env.*
+!.env.example
 
 # Uploads
 app/static/uploads/*
 !app/static/uploads/.gitkeep
 
+# Outputs
+app/static/outputs/*
+!app/static/outputs/.gitkeep
+
+# Temp files
+app/static/temp/*
+!app/static/temp/.gitkeep
+
 # OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Project specific
+instance/
+.webassets-cache
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+
+# Documentation
+docs/_build/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Local development
+.local/
+
+# Secrets
+secrets.ini
+secrets.yaml
+secrets.yml
+
+# Project files
+.project
+.pydevproject
+.settings/
+
+# Virtual machine files
+.vagrant/
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 .DS_Store
 .DS_Store?
 Thumbs.db

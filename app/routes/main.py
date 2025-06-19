@@ -329,48 +329,74 @@ def process_image():
 
         # Kiểm tra kích thước file
         max_size_mb = 50
-        if len(file.read()) > max_size_mb * 1024 * 1024:
+        file_data = file.read()
+        if len(file_data) > max_size_mb * 1024 * 1024:
             return jsonify({'error': f'File size exceeds {max_size_mb}MB limit'}), 400
-        file.seek(0)  # Reset file pointer
-
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        
+            
         # Lưu file tạm thời
-        file.save(filepath)
+        filename = secure_filename(file.filename)
+        temp_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'temp')
+        os.makedirs(temp_dir, exist_ok=True)
+        
+        temp_path = os.path.join(temp_dir, f'temp_{os.urandom(8).hex()}_{filename}')
+        output_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
         
         try:
-            # Đọc ảnh bằng PIL để kiểm tra kích thước
+            # Lưu file tạm
+            with open(temp_path, 'wb') as f:
+                f.write(file_data)
+            
+            # Sử dụng ImageProcessor để xử lý ảnh
+            from app.utils.image_processor import image_processor
+            
+            # Kiểm tra dung lượng bộ nhớ trước khi xử lý
+            if not image_processor.check_memory_available(200):
+                return jsonify({'error': 'Not enough memory to process this image. Please try again later.'}), 500
+            
+            # Xử lý ảnh
+            result = image_processor.process_large_image(
+                temp_path,
+                output_path,
+                max_dimension=current_app.config.get('MAX_IMAGE_SIZE', 9000),
+                quality=90
+            )
+            
+            if not result['success']:
+                raise Exception(result.get('error', 'Failed to process image'))
+            
+            # Lấy thông tin ảnh đã xử lý
             from PIL import Image
-            img = Image.open(filepath)
-            width, height = img.size
-            
-            # Kiểm tra kích thước ảnh
-            max_dimension = current_app.config.get('MAX_IMAGE_SIZE', 9000)
-            if width > max_dimension or height > max_dimension:
-                os.remove(filepath)
-                return jsonify({
-                    'error': f'Image dimensions ({width}x{height}) exceed maximum allowed size ({max_dimension}x{max_dimension})'
-                }), 400
-            
-            # Nếu ảnh hợp lệ, chuyển đổi sang OpenCV nếu cần
-            img_cv = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+            with Image.open(output_path) as img:
+                width, height = img.size
             
             return jsonify({
                 'filename': filename,
                 'width': width,
                 'height': height,
+                'size': os.path.getsize(output_path),
                 'url': url_for('static', filename=f'uploads/{filename}')
             })
             
         except Exception as e:
-            current_app.logger.error(f'Error processing image: {str(e)}')
-            if os.path.exists(filepath):
-                os.remove(filepath)
+            current_app.logger.error(f'Error processing image: {str(e)}', exc_info=True)
+            # Xóa file tạm nếu có lỗi
+            if os.path.exists(output_path):
+                try:
+                    os.remove(output_path)
+                except:
+                    pass
             return jsonify({'error': f'Error processing image: {str(e)}'}), 500
             
+        finally:
+            # Dọn dẹp file tạm
+            if os.path.exists(temp_path):
+                try:
+                    os.remove(temp_path)
+                except:
+                    pass
+            
     except Exception as e:
-        current_app.logger.error(f'Unexpected error: {str(e)}')
+        current_app.logger.error(f'Unexpected error: {str(e)}', exc_info=True)
         return jsonify({'error': 'An unexpected error occurred'}), 500
 
 @bp.route('/api/extract-regions', methods=['POST'])
@@ -378,12 +404,6 @@ def extract_image_regions():
     temp_path = None
     try:
         current_app.logger.info('Bắt đầu xử lý extract regions')
-        
-        # Kiểm tra bộ nhớ trước khi xử lý
-        import psutil
-        memory = psutil.virtual_memory()
-        if memory.available < 500 * 1024 * 1024:  # Ít hơn 500MB trống
-            return jsonify({'error': 'Not enough memory to process this large image'}), 500
         
         # Kiểm tra xem có file trong request không
         if 'file' not in request.files:
@@ -399,6 +419,12 @@ def extract_image_regions():
             
         current_app.logger.info(f'Template ID: {template_id}')
         current_app.logger.info(f'File: {file.filename}')
+        
+        # Kiểm tra bộ nhớ trước khi xử lý
+        import psutil
+        memory = psutil.virtual_memory()
+        if memory.available < 500 * 1024 * 1024:  # Ít hơn 500MB trống
+            return jsonify({'error': 'Not enough memory to process this large image'}), 500
         
         # Lấy thông tin template
         template = Template.query.get(template_id)
@@ -494,57 +520,61 @@ def extract_image_regions():
                 # Giải phóng bộ nhớ
                 del img
                 
-                # Lưu các vùng đã cắt
-                region1_filename = f"{base_name}_region1.png"
-                region2_filename = f"{base_name}_region2.png"
-                region1_path = os.path.join(output_dir, region1_filename)
-                region2_path = os.path.join(output_dir, region2_filename)
+                # Sử dụng ImageProcessor để cắt ảnh
+                results = []
+                for i, region in enumerate(regions):
+                    # Tạo tên file đầu ra
+                    output_filename = f"{region['name'].replace(' ', '_').lower()}_{int(time.time())}.jpg"
+                    output_path = os.path.join(result_dir, output_filename)
+                    
+                    # Tạo danh sách các vùng cần cắt
+                    region_list = [{
+                        'x': region['x'],
+                        'y': region['y'],
+                        'width': region['width'],
+                        'height': region['height']
+                    }]
+                    
+                    # Gọi ImageProcessor để cắt ảnh
+                    extracted = image_processor.extract_regions(
+                        temp_path,
+                        region_list,
+                        result_dir
+                    )
+                    
+                    if extracted and extracted[0]:
+                        # Đổi tên file kết quả
+                        os.rename(extracted[0]['path'], output_path)
+                        
+                        results.append({
+                            'name': region['name'],
+                            'url': url_for('static', filename=f'outputs/{template.id}/{os.path.basename(output_path)}')
+                        })
                 
-                # Sử dụng PIL để lưu ảnh với chất lượng tốt hơn
-                from PIL import Image
-                Image.fromarray(cv2.cvtColor(region1, cv2.COLOR_BGR2RGB)).save(region1_path, 'PNG', quality=95, optimize=True)
-                Image.fromarray(cv2.cvtColor(region2, cv2.COLOR_BGR2RGB)).save(region2_path, 'PNG', quality=95, optimize=True)
+                if not results:
+                    raise Exception('Failed to extract any regions from the image')
                 
-                # Giải phóng bộ nhớ
-                del region1, region2
+                # Trả về kết quả
+                return jsonify({
+                    'success': True,
+                    'results': results
+                })
                 
             except Exception as e:
-                current_app.logger.error(f'Lỗi khi cắt ảnh: {str(e)}')
-                raise
-            
-            # Tạo URL để truy cập ảnh
-            base_url = request.host_url.rstrip('/')
-            region1_url = f"{base_url}/output/{region1_filename}"
-            region2_url = f"{base_url}/output/{region2_filename}"
-            
-            # Trả về kết quả trước khi dọn dẹp để đảm bảo phản hồi nhanh
-            response_data = {
-                'success': True,
-                'region1': region1_url,
-                'region2': region2_url,
-                'message': 'Xử lý ảnh thành công!',
-                'dimensions': {
-                    'region1': {'width': w1, 'height': h1},
-                    'region2': {'width': w2, 'height': h2}
-                }
-            }
-            
-            # Chuyển việc dọn dẹp sang một luồng riêng để không làm chậm phản hồi
-            def cleanup_temp_file(file_path):
-                try:
-                    if os.path.exists(file_path):
-                        os.remove(file_path)
-                        current_app.logger.info(f'Đã xóa file tạm: {file_path}')
-                except Exception as e:
-                    current_app.logger.error(f'Lỗi khi xóa file tạm {file_path}: {str(e)}')
-            
-            # Sử dụng ThreadPool để xử lý việc dọn dẹp
-            from concurrent.futures import ThreadPoolExecutor
-            with ThreadPoolExecutor(max_workers=1) as executor:
-                executor.submit(cleanup_temp_file, temp_path)
-            
-            return jsonify(response_data)
-            
+                current_app.logger.error(f'Error processing image: {str(e)}', exc_info=True)
+                return jsonify({
+                    'success': False,
+                    'error': f'Error processing image: {str(e)}'
+                }), 500
+                
+            finally:
+                # Dọn dẹp file tạm
+                if temp_path and os.path.exists(temp_path):
+                    try:
+                        os.remove(temp_path)
+                    except Exception as e:
+                        current_app.logger.error(f'Could not delete temp file: {str(e)}')
+                        
         except Exception as e:
             current_app.logger.error(f'Lỗi khi xử lý ảnh: {str(e)}')
             current_app.logger.error(traceback.format_exc())

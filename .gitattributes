@@ -1,0 +1,314 @@
+# Đặt kết thúc dòng mặc định cho tất cả các file văn bản
+* text=auto eol=lf
+
+# Đảm bảo các file Windows .bat và .cmd sử dụng CRLF
+*.{cmd,[cC][mM][dD]} text eol=crlf
+*.{bat,[bB][aA][tT]} text eol=crlf
+
+# Các file nhị phân
+*.{png,jpg,jpeg,gif,ico,pdf,zip,7z,rar,exe,dll,so,dylib} binary
+
+# Các file Python
+*.py diff=python
+
+# Các file cấu hình
+*.ini text
+*.cfg text
+*.conf text
+*.json text
+*.yaml text
+*.yml text
+*.toml text
+*.md text
+
+# Các file bỏ qua trong diff
+*.{png,jpg,jpeg,gif,ico,pdf} -diff
+
+# Định nghĩa các file nén
+*.{zip,7z,rar} -text
+
+# File thực thi
+*.exe binary
+*.dll binary
+*.so binary
+*.dylib binary
+
+# File dữ liệu
+*.{csv,tsv,xls,xlsx,doc,docx,ppt,pptx} binary
+
+# File môi trường
+.env* text eol=lf
+.env*.local text eol=lf
+
+# File IDE
+.idea/* -diff -merge
+.vscode/* -diff -merge
+*.sublime-* -diff -merge
+*.sublime-project -diff -merge
+*.sublime-workspace -diff -merge
+
+# File hệ thống
+.DS_Store -text
+Thumbs.db -text
+desktop.ini -text
+
+# File Python
+*.py[cod] binary
+__pycache__/ -text
+*.py[co] binary
+*.so binary
+.Python binary
+*.manifest binary
+*.egg binary
+
+# File log
+*.log -text
+
+# File tạm
+*~ -text
+*.swp -text
+*.swo -text
+*.swn -text
+
+# File ảo hóa môi trường
+venv/ -text
+env/ -text
+ENV/ -text
+.venv/ -text
+.env/ -text
+
+# File build
+dist/ -text
+build/ -text
+*.egg-info/ -text
+*.egg -text
+
+# File kiểm thử
+.coverage -text
+htmlcov/ -text
+.pytest_cache/ -text
+.mypy_cache/ -text
+
+# File bảo mật
+*.pem -text
+*.key -text
+*.crt -text
+*.cert -text
+*.p12 -text
+*.pfx -text
+
+# File SQLite
+*.sqlite3 -text
+*.db -text
+*.sqlite -text
+
+# File Docker
+Dockerfile* text
+docker-compose*.yml text
+.dockerignore text
+
+# File Git
+.gitattributes text
+.gitignore text
+.gitmodules text
+
+# File Markdown
+*.md text
+*.markdown text
+
+# File văn bản thuần
+*.txt text
+*.text text
+*.rst text
+*.md text
+*.mkd text
+*.markdown text
+
+# File cấu hình
+.editorconfig text
+.gitconfig text
+.gitkeep text
+
+# File yêu cầu
+requirements*.txt text
+constraints*.txt text
+
+# File cài đặt
+setup.py text
+setup.cfg text
+pyproject.toml text
+MANIFEST.in text
+
+# File tài liệu
+*.1 text
+*.man text
+*.mdoc text
+
+# File cấu hình Python
+*.pylintrc text
+*.pylintrc.* text
+*.pylintrc_* text
+*.pylintrc-* text
+*.pylintrc.*.dist text
+*.pylintrc-*.dist text
+
+# File cấu hình khác
+*.editorconfig text
+*.gitattributes text
+*.gitconfig text
+*.gitignore text
+*.gitkeep text
+*.mailmap text
+*.npmignore text
+*.npmrc text
+*.perltidyrc text
+*.prettierignore text
+*.prettierrc text
+*.styleci.yml text
+*.stylelintrc text
+*.stylelintrc.* text
+*.stylelintrc-* text
+*.stylelintrc.*.dist text
+*.stylelintrc-*.dist text
+*.tern-project text
+*.travis.yml text
+*.vimrc text
+*.yarnrc text
+*.yml text
+*.yaml text
+*.toml text
+*.ini text
+*.cfg text
+*.conf text
+*.pylintrc text
+*.pylintrc.* text
+*.pylintrc_* text
+*.pylintrc-* text
+*.pylintrc.*.dist text
+*.pylintrc-*.dist text
+.editorconfig text
+.gitattributes text
+.gitconfig text
+.gitignore text
+.gitkeep text
+.mailmap text
+.npmignore text
+.npmrc text
+.perltidyrc text
+.prettierignore text
+.prettierrc text
+.styleci.yml text
+.stylelintrc text
+.stylelintrc.* text
+.stylelintrc-* text
+.stylelintrc.*.dist text
+.stylelintrc-*.dist text
+.tern-project text
+.travis.yml text
+.vimrc text
+.yarnrc text
+*.yml text
+*.yaml text
+*.toml text
+*.ini text
+*.cfg text
+*.conf text
+*.pylintrc text
+*.pylintrc.* text
+*.pylintrc_* text
+*.pylintrc-* text
+*.pylintrc.*.dist text
+*.pylintrc-*.dist text
+.editorconfig text
+.gitattributes text
+.gitconfig text
+.gitignore text
+.gitkeep text
+.mailmap text
+.npmignore text
+.npmrc text
+.perltidyrc text
+.prettierignore text
+.prettierrc text
+.styleci.yml text
+.stylelintrc text
+.stylelintrc.* text
+.stylelintrc-* text
+.stylelintrc.*.dist text
+.stylelintrc-*.dist text
+.tern-project text
+.travis.yml text
+.vimrc text
+.yarnrc text
+*.yml text
+*.yaml text
+*.toml text
+*.ini text
+*.cfg text
+*.conf text
+*.pylintrc text
+*.pylintrc.* text
+*.pylintrc_* text
+*.pylintrc-* text
+*.pylintrc.*.dist text
+*.pylintrc-*.dist text
+.editorconfig text
+.gitattributes text
+.gitconfig text
+.gitignore text
+.gitkeep text
+.mailmap text
+.npmignore text
+.npmrc text
+.perltidyrc text
+.prettierignore text
+.prettierrc text
+.styleci.yml text
+.stylelintrc text
+.stylelintrc.* text
+.stylelintrc-* text
+.stylelintrc.*.dist text
+.stylelintrc-*.dist text
+.tern-project text
+.travis.yml text
+.vimrc text
+.yarnrc text
+*.yml text
+*.yaml text
+*.toml text
+*.ini text
+*.cfg text
+*.conf text
+*.pylintrc text
+*.pylintrc.* text
+*.pylintrc_* text
+*.pylintrc-* text
+*.pylintrc.*.dist text
+*.pylintrc-*.dist text
+.editorconfig text
+.gitattributes text
+.gitconfig text
+.gitignore text
+.gitkeep text
+.mailmap text
+.npmignore text
+.npmrc text
+.perltidyrc text
+.prettierignore text
+.prettierrc text
+.styleci.yml text
+.stylelintrc text
+.stylelintrc.* text
+.stylelintrc-* text
+.stylelintrc.*.dist text
+.stylelintrc-*.dist text
+.tern-project text
+.travis.yml text
+.vimrc text
+.yarnrc text
+*.yml text
+*.yaml text
+*.toml text
+*.ini text
+*.cfg text
+*.conf text

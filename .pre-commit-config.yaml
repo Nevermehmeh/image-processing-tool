@@ -1,0 +1,114 @@
+# Cấu hình pre-commit hooks
+# Tài liệu: https://pre-commit.com/
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: check-json
+      - id: check-toml
+      - id: check-xml
+      - id: debug-statements
+      - id: detect-aws-credentials
+      - id: detect-private-key
+
+  # Định dạng code với black và isort
+  - repo: https://github.com/psf/black
+    rev: 23.7.0
+    hooks:
+      - id: black
+        language_version: python3
+        args: [--line-length=88]
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        name: isort (python)
+        args: [--profile=black, --filter-files]
+
+  # Kiểm tra lỗi code với flake8
+  - repo: https://github.com/pycqa/flake8
+    rev: 6.1.0
+    hooks:
+      - id: flake8
+        additional_dependencies: [flake8-bugbear==23.7.10, flake8-comprehensions==3.12.0]
+        args: [--max-line-length=88, --extend-ignore=E203, --max-complexity=10]
+
+  # Kiểm tra kiểu dữ liệu với mypy
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.5.1
+    hooks:
+      - id: mypy
+        additional_dependencies: [types-requests, types-python-dateutil, types-PyYAML]
+        args: [--ignore-missing-imports, --disallow-untyped-defs, --disallow-incomplete-defs]
+        exclude: ^tests/
+
+  # Kiểm tra bảo mật
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.5
+    hooks:
+      - id: bandit
+        args: [--skip=B101, -lll, --recursive, --exclude=./tests, --exclude=./venv]
+
+  # Kiểm tra lỗi bảo mật trong dependencies
+  - repo: https://github.com/pyupio/safety
+    rev: 2.3.5
+    hooks:
+      - id: safety
+        args: [--full-report, --ignore=51457]
+        pass_filenames: false
+
+  # Kiểm tra lỗi bảo mật với git-secrets
+  - repo: https://github.com/awslabs/git-secrets
+    rev: master
+    hooks:
+      - id: git-secrets
+        stages: [commit, push]
+
+  # Kiểm tra lỗi trong Dockerfile
+  - repo: https://github.com/IamTheFij/docker-pre-commit
+    rev: v2.1.1
+    hooks:
+      - id: docker-compose-check
+      - id: docker-compose-command-args
+
+  # Kiểm tra định dạng Markdown
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.34.0
+    hooks:
+      - id: markdownlint
+        args: [--config=.markdownlint.json, --fix]
+        exclude: ^(CHANGELOG\.md|docs/.*\.md)$
+
+  # Kiểm tra định dạng YAML
+  - repo: https://github.com/adrienverge/yamllint.git
+    rev: v1.30.0
+    hooks:
+      - id: yamllint
+        args: [--strict, --format, parsable, --config-file, .yamllint.yml]
+
+  # Tự động cập nhật file requirements.txt
+  - repo: https://github.com/cjolowicz/cookiecutter-hypermodern-python-instance
+    rev: 2022.8.7
+    hooks:
+      - id: update-requirements-txt
+        name: Update requirements.txt
+        description: Update requirements.txt with the package dependencies.
+        entry: bash -c 'pip freeze > requirements.txt'
+        language: system
+        always_run: true
+        pass_filenames: false
+        stages: [manual]
+
+# Cấu hình mặc định
+default_language_version:
+  python: python3
+
+default_stages: [commit, push]

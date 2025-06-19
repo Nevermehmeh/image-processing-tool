@@ -1,0 +1,139 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: image_processor_app
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - FLASK_ENV=${FLASK_ENV:-production}
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - REDIS_URL=redis://redis:6379/0
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./app/static/uploads:/app/app/static/uploads
+      - ./app/static/outputs:/app/app/static/outputs
+      - ./app/static/temp:/app/app/static/temp
+      - ./logs:/app/logs
+    depends_on:
+      - redis
+      - db
+    networks:
+      - app-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+
+  db:
+    image: postgres:13-alpine
+    container_name: image_processor_db
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_DB=${POSTGRES_DB:-image_processor}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    networks:
+      - app-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+
+  redis:
+    image: redis:6-alpine
+    container_name: image_processor_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - app-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  # Celery worker (tùy chọn, nếu cần xử lý bất đồng bộ)
+  worker:
+    build: .
+    container_name: image_processor_worker
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - FLASK_ENV=${FLASK_ENV:-production}
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    command: celery -A app.tasks.celery_worker.celery worker --loglevel=info
+    volumes:
+      - ./app:/app/app
+      - ./logs:/app/logs
+    depends_on:
+      - redis
+      - db
+    networks:
+      - app-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+
+  # Celery beat (tùy chọn, cho các tác vụ định kỳ)
+  beat:
+    build: .
+    container_name: image_processor_beat
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - FLASK_ENV=${FLASK_ENV:-production}
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    command: celery -A app.tasks.celery_worker.celery beat --loglevel=info
+    volumes:
+      - ./app:/app/app
+      - ./logs:/app/logs
+    depends_on:
+      - redis
+      - db
+    networks:
+      - app-network
+
+  # Flower (giao diện quản lý Celery, tùy chọn)
+  flower:
+    build: .
+    container_name: image_processor_flower
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - FLASK_ENV=${FLASK_ENV:-production}
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    command: celery -A app.tasks.celery_worker.celery flower --port=5555
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+      - worker
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:

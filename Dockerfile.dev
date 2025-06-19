@@ -1,0 +1,40 @@
+# Giai đoạn phát triển
+FROM python:3.9-slim as development
+
+# Đặt thư mục làm việc
+WORKDIR /app
+
+# Cài đặt các phụ thuộc hệ thống
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libvips-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Sao chép file yêu cầu phụ thuộc
+COPY requirements*.txt ./
+
+# Cài đặt các phụ thuộc Python
+RUN pip install --no-cache-dir -r requirements.txt -r requirements-dev.txt
+
+# Sao chép mã nguồn ứng dụng
+COPY . .
+
+# Tạo các thư mục cần thiết
+RUN mkdir -p /app/logs /app/app/static/uploads /app/app/static/outputs /app/app/static/temp
+
+# Thiết lập biến môi trường
+ENV FLASK_APP=wsgi:app
+ENV FLASK_ENV=development
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app
+
+# Cổng mặc định
+EXPOSE 5000
+
+# Lệnh khởi động mặc định
+CMD ["flask", "run", "--host=0.0.0.0", "--port=5000"]
+
+# Gắn thẻ cho Docker image
+LABEL maintainer="dev@example.com"
+LABEL version="1.0.0-dev"
+LABEL description="Môi trường phát triển cho Image Processor"
